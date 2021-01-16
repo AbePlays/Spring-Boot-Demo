@@ -3,30 +3,29 @@ package com.abe.springboot.crud.dao;
 import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
-import org.hibernate.Session;
-import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.abe.springboot.crud.entity.Employee;
 
+// JPA implementation
+
 @Repository
-public class EmployeeDAOImpl implements EmployeeDAO {
+public class EmployeeDAOJpaImpl implements EmployeeDAO {
 	
 	private EntityManager entityManager;
 	
 	@Autowired
-	public EmployeeDAOImpl(EntityManager theEntityManager) {
+	public EmployeeDAOJpaImpl(EntityManager theEntityManager) {
 		entityManager = theEntityManager;
 	}
 
 	@Override
 	public List<Employee> findAll() {
-
-		Session currSession = entityManager.unwrap(Session.class);
 		
-		Query<Employee> theQuery = currSession.createQuery("from Employee", Employee.class);
+		Query theQuery = entityManager.createQuery("from Employee");
 		
 		List<Employee> employees = theQuery.getResultList();
 		
@@ -35,10 +34,8 @@ public class EmployeeDAOImpl implements EmployeeDAO {
 
 	@Override
 	public Employee findById(int id) {
-
-		Session currSession = entityManager.unwrap(Session.class);
 		
-		Employee employee = currSession.get(Employee.class, id);
+		Employee employee = entityManager.find(Employee.class, id);
 		
 		return employee;
 	}
@@ -46,19 +43,21 @@ public class EmployeeDAOImpl implements EmployeeDAO {
 	@Override
 	public void save(Employee employee) {
 		
-		Session currSession = entityManager.unwrap(Session.class);
+		Employee theEmployee = entityManager.merge(employee);
 		
-		currSession.saveOrUpdate(employee);
+		employee.setId(theEmployee.getId());
+		
 	}
 
 	@Override
 	public void deleteById(int id) {
 
-		Session currSession = entityManager.unwrap(Session.class);
+		Query theQuery = entityManager.createQuery("delete from Employee where id=:employeeId");
 		
-		Employee employee = findById(id);
+		theQuery.setParameter("employeeId", id);
 		
-		currSession.delete(employee);
+		theQuery.executeUpdate();
+		
 	}
 
 }
